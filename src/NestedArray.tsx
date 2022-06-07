@@ -7,7 +7,7 @@ interface IProps {
      index:number,
      control:any,
      register:any
-     errors:any
+     errors?:any
 }
 
 const NestedArray = ({index, control, register,errors}:IProps) =>{

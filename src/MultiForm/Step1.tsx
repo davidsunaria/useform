@@ -4,7 +4,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import ErrorMessage from "../component/ErrorMessage";
 import Input from "../component/Input";
 import NestedArray from "../NestedArray";
-import Detail from "../Detail";
+
 import * as yup from "yup";
 import axios from "axios";
 import Select from "react-select";
@@ -80,12 +80,12 @@ const Step1: React.FC = ({ previousStep, nextStep }: any): JSX.Element => {
     //  var json = JSON.stringify(object)
     // console.log("payload", payload)
     // await axios.post("http://localhost:8000/posts", payload);
-    DataSubmit(true);
+   // DataSubmit(true);
   };
 
-  const renderMethod = () => {
-    DataSubmit(false);
-  };
+  // const renderMethod = () => {
+  //   DataSubmit(false);
+  // };
 
   const {
     fields: varientFields,
@@ -393,7 +393,7 @@ console.log("check error",errors)
         <button type="submit" className="btn btn-info mx-4"  > Next  </button>
       </form>{" "}
       <br />
-      <Detail isDataSubmit={isDataSubmit} renderMethod={renderMethod} />
+     
     </>
   );
 };

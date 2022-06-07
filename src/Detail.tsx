@@ -1,4 +1,12 @@
-import React, { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import React, {
+  FC,
+  Fragment,
+  ReactNode,
+  memo,
+  useEffect,
+  useState,
+  useContext,
+} from "react";
 import logo from "./logo.svg";
 import axios from "axios";
 import useEffectAsync from "./useEffectAsync";
@@ -9,7 +17,12 @@ import IUser from "./IUser";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { IconContext } from "react-icons";
 import { BsFillXDiamondFill } from "react-icons/bs";
+import FormContext from "./MultiFormContext";
+import _ from "lodash";
 
+import { Alert } from "react-bootstrap";
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
 interface ErrorProps {
   type?: string;
   name?: string;
@@ -19,32 +32,44 @@ interface ErrorProps {
 }
 
 const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
+  const { isRender, lastData ,changeRender}: any = useContext(FormContext);
   const [data, setData] = useState<any>([]);
   const [isOpen, setOpen] = useState<boolean>(false);
   const [propsData, setPropsData] = useState<any>();
-  const [isRender, setRender] = useState<boolean>(false);
   const [isConfirm, setConfirm] = useState<boolean>(false);
+  const [isDeleted, setDeleted] = useState<boolean>(false);
+  const [deletedId, setDeletedId] = useState<number | string>("");
   const [deletedData, setDeletedData] = useState<IUser>();
-  // const [tableRender] = useState<boolean>(true);
+ 
 
-  const getUpdatedValue = () => {
-    setRender(true);
-  };
   useEffect(() => {
-    if (isDataSubmit) {
-      setRender(true);
-    }
-  }, [isDataSubmit]);
+    axios.get("http://localhost:8000/posts").then((detail) => {
+      setData(detail?.data);
+    });
+  }, []);
 
-  useEffectAsync(async () => {
-    let detail = await axios.get("http://localhost:8000/posts");
-    setData(detail.data);
-    setRender(false);
-  }, [isRender]);
-  //      useEffect( async ()=>{
-  //    await axios.get("http://localhost:8000/posts");
-  //     },[])
-  // console.log("data", data);
+  useEffect(() => {
+    if( Object.keys(lastData).length !== 0){
+      setData((_: any) => [..._, lastData]);
+    }
+  }, [lastData]);
+
+
+  const updateHandler = async (id :number ,value: IUser) => {
+    console.log("id",id, "value",value)
+    try {
+      let response =  await axios.patch("http://localhost:8000/posts/" + id, value);
+      if (response.status === 200) {
+        const updatedData = [...data];
+        let index = updatedData.findIndex((val: any) => val.id === id);
+        console.log("updatde index",index)
+        updatedData[index]=value;
+        setData([...updatedData]);
+      }
+    } catch (error: any) {
+      alert(error?.response?.data);
+    }
+  };
 
   const setModal = (data: any) => {
     setPropsData(data);
@@ -55,26 +80,48 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
   };
 
   const confirmModal = (data: any) => {
-    console.log("conform");
-    setConfirm(true);
-    setDeletedData(data);
+    confirmAlert({
+      customUI: ({ onClose }) => {
+        return (
+          <Alert variant={"info"}>
+            <div className="custom-ui">
+              <h1>Are you sure?</h1>
+              <p>You want to delete this file?</p>
+              <button onClick={onClose} className="btn-sm btn-warning mx-2">
+                No
+              </button>
+              <button
+                onClick={() => {
+                  deleteHandler(data);
+                  onClose();
+                }}
+                className="btn-sm btn-warning"
+              >
+                yes
+              </button>
+            </div>
+          </Alert>
+        );
+      },
+    })
   };
-  const deleteHandler = (value: IUser) => {
-    axios.delete("http://localhost:8000/posts/" + value?.id);
-    //console.log("response",response)
-    // if(response.status===200){
-    //   console.log("two times")
-    //   const filterData = [...data];
-    //   let index = filterData.findIndex((val: any) => val.id === value?.id);
-    //   filterData.splice(index, 1);
-    //   setData([...filterData]);
-    // }
-    const filterData = [...data];
-    let index = filterData.findIndex((val: any) => val.id === value?.id);
-    filterData.splice(index, 1);
-    setData([...filterData]);
-    setConfirm(false);
+  const deleteHandler = async (value: IUser) => {
+    try {
+      let response = await axios.delete(
+        "http://localhost:8000/posts/" + value?.id
+      );
+      if (response.status === 200) {
+        const filterData = [...data];
+        let index = filterData.findIndex((val: any) => val.id === value?.id);
+        filterData.splice(index, 1);
+        setData([...filterData]);
+      }
+    } catch (error: any) {
+      alert(error?.response?.data);
+    }
   };
+ 
+  
 
   const reorder = (list: any, startIndex: any, endIndex: any) => {
     const result = Array.from(list);
@@ -119,20 +166,20 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
         {isOpen && (
           <UpdateModal
             updatedData={propsData}
-            getUpdatedValue={getUpdatedValue}
+            updateHandler={updateHandler}
+            // getUpdatedValue={getUpdatedValue}
             showModal={isOpen}
             toggle={toggle}
           />
         )}
-
-        {isConfirm && (
+        {/* {isConfirm && (
           <CustomConfirm
             showConfirm={isConfirm}
             confirmText={"yes"}
             deleteHandler={deleteHandler}
             deletedData={deletedData}
           />
-        )}
+        )} */}
 
         <DragDropContext onDragEnd={onEnd}>
           <Droppable droppableId="droppable-1">
@@ -143,8 +190,8 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
                   data?.map((value: any, i: number) => {
                     return (
                       <Draggable
-                        draggableId={value.id.toString()}
-                        key={value.id}
+                        draggableId={value?.id?.toString()}
+                        key={value?.id}
                         index={i}
                       >
                         {(provided, snapshot) => (
@@ -158,7 +205,14 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
                               provided.draggableProps.style
                             )}
                           >
-                            <IconContext.Provider value={{ style: {fontSize: '30px', color: "rgb(0, 123, 255)"}}}>
+                            <IconContext.Provider
+                              value={{
+                                style: {
+                                  fontSize: "30px",
+                                  color: "rgb(0, 123, 255)",
+                                },
+                              }}
+                            >
                               <BsFillXDiamondFill />
                             </IconContext.Provider>
                             <td>{value?.firstName}</td>
@@ -257,4 +311,4 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
   );
 };
 
-export default Detail;
+export default memo(Detail);

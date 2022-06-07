@@ -1,9 +1,11 @@
-import React, { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import React, { FC, useEffect} from "react";
 import logo from "./logo.svg";
 import { Modal, Button, Accordion } from "react-bootstrap";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import Select from "react-select";
 import axios from "axios";
+import Detail from "././Detail";
+import NestedArray from "./NestedArray";
 
 interface IModal {
   updatedData?: any;
@@ -11,17 +13,16 @@ interface IModal {
   showModal?: boolean;
   name?: string;
   max?: number | string;
-  getUpdatedValue?:any;
-  
+  updateHandler?:any
 }
 
 const UpdateModal: FC<IModal> = ({
   updatedData,
   toggle,
   showModal,
-  getUpdatedValue,
   name,
   max,
+  updateHandler
 }) => {
   const weekDays = [
     { value: "sunday", label: "Sunday" },
@@ -32,7 +33,6 @@ const UpdateModal: FC<IModal> = ({
     { value: "friday", label: "Friday" },
     { value: "saturday", label: "Saturday" },
   ];
-
   const [options, setOptions] = React.useState<any>(weekDays);
   const [isDisable, setDisable] = React.useState<boolean>(false);
   const [weekCount, setWeekCount] = React.useState<number>(1);
@@ -64,7 +64,6 @@ const UpdateModal: FC<IModal> = ({
     control,
   });
 
- 
   useEffect(() => {
     let defaultEnable: any = [];
     let newOptions = [...options];
@@ -88,15 +87,14 @@ const UpdateModal: FC<IModal> = ({
       });
     });
 
-    newOptions.forEach((value,index)=>{
-      defaultEnable.forEach((val:any,i:any)=>{
-        if(value.value===val.value){
+    newOptions.forEach((value, index) => {
+      defaultEnable.forEach((val: any, i: any) => {
+        if (value.value === val.value) {
           newOptions[index].isDisabled = true;
         }
-      })
-    })
-      setOptions(newOptions)
-    
+      });
+    });
+    setOptions(newOptions);
   }, [updatedData]);
 
   const disableOption = (e: any) => {
@@ -124,22 +122,20 @@ const UpdateModal: FC<IModal> = ({
   };
 
   const onSubmit = async (data: any) => {
-    console.log("submit function", data);
-    await axios.patch("http://localhost:8000/posts/" + updatedData.id,data)
-    closeModal()
+    updateHandler(updatedData?.id,data)
+    // await axios.patch("http://localhost:8000/posts/" + updatedData.id, data);
+    // changeRender(true)
+    closeModal();
   };
   const closeModal = () => {
     toggle();
-   // setPropsData({})
-    varientRemove()
-    weekRemove()
-    getUpdatedValue()
+    // setPropsData({})
+    varientRemove();
+    weekRemove();
   };
 
   return (
-  
     <>
-    
       <Modal
         show={showModal}
         onHide={closeModal}
@@ -169,8 +165,6 @@ const UpdateModal: FC<IModal> = ({
             <input
               {...register("description", {
                 required: true,
-                maxLength: 10,
-                minLength: 4,
                 value: updatedData?.description,
               })}
             />
@@ -293,6 +287,10 @@ const UpdateModal: FC<IModal> = ({
                         )}
                         className="mx-2"
                       />
+                      {/* <NestedArray
+                        index={index}
+                        {...{ control, register }}
+                      /> */}
                       {index > 0 && (
                         <button
                           type="button"
@@ -331,9 +329,9 @@ const UpdateModal: FC<IModal> = ({
               })}
             </ul>
             {/* <input type="submit" /> */}
-            <Button  type="submit" variant="secondary"  >
-            Submit
-          </Button>
+            <Button type="submit" variant="secondary">
+              Submit
+            </Button>
           </form>{" "}
           <br />
         </Modal.Body>

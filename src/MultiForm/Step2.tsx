@@ -7,7 +7,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import FormContext from "../MultiFormContext"
 
 const Step2 = ({ previousStep, nextStep }: any) => {
-  console.log()
   const { formSchema2 } = useAuthValidation();
   const { step1Data, dataSubmit ,onNext,onBack}:any = useContext(FormContext);
   const {
