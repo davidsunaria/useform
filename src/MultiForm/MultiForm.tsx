@@ -11,39 +11,26 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Detail from "../Detail";
 
+interface IFormStepOne {
+  
+}
+interface IFormStepTwo {
+  
+}
+interface IFormStepThree {
+  
+}
+interface IFormStepFour {
+  
+}
 const MultiForm = () => {
-  const [step1Data, setStep1Data] = useState<any>(
-    {}
-    //   {
-    //   firstName: "",
-    //   description: "",
-    //   city: "",
-    //   varient: [
-    //     {
-    //       feature: "",
-    //       value: "",
-    //     },
-    //   ],
-    //   Week: [
-    //     {
-    //       startTime: "",
-    //       endTime: "",
-    //       day: "",
-    //       intervalfields: [
-    //         {
-    //           firstInterval: "",
-    //           secondInterval: "",
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // }
-  );
-  const [step2Data, setStep2Data] = useState<any>({});
-  const [step3Data, setStep3Data] = useState<any>({});
-  const [step4Data, setStep4Data] = useState<any>({});
+  const [step1Data, setStep1Data] = useState<IFormStepOne>({});
+  const [step2Data, setStep2Data] = useState<IFormStepTwo>({});
+  const [step3Data, setStep3Data] = useState<IFormStepThree>({});
+  const [step4Data, setStep4Data] = useState<IFormStepFour>({});
   const [lastData, setLastData] = useState<any>({});
   const [isSubmitted, setSubmit] = useState<boolean>(false);
+  const [isCreated, setCreated] = useState<boolean>(false);
 
   const changeStep = (first: any, sec: any) => {
     console.log("chaneg", first, sec);
@@ -66,22 +53,33 @@ const MultiForm = () => {
 
   useEffectAsync(async () => {
     let finalData = { ...step1Data, ...step2Data, ...step3Data, ...step4Data };
-    setLastData(finalData);
+   // setLastData(finalData);
     if (isSubmitted) {
-      await axios.post("http://localhost:8000/posts", finalData);
+      let response  = await axios.post("http://localhost:8000/posts", finalData);
+        console.log("response",response)
+        if(response?.status===201){
+          setCreated(true)
+        }
     }
   }, [isSubmitted]);
+
+  
+
+  const changeCreatedStatus = () =>{
+    setCreated(false)
+  }
 
   return (
     <>
       <Provider
         value={{
           step1Data,
-          step2Data,
+          step2Data,     
           step3Data,
           step4Data,
           dataSubmit,
-          lastData,
+          isCreated,
+          changeCreatedStatus
         }}
       >
         <StepWizard

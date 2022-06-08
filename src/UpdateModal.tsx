@@ -1,4 +1,4 @@
-import React, { FC, useEffect} from "react";
+import React, { FC, useEffect, memo } from "react";
 import logo from "./logo.svg";
 import { Modal, Button, Accordion } from "react-bootstrap";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
@@ -13,7 +13,7 @@ interface IModal {
   showModal?: boolean;
   name?: string;
   max?: number | string;
-  updateHandler?:any
+  updateHandler?: any;
 }
 
 const UpdateModal: FC<IModal> = ({
@@ -22,7 +22,7 @@ const UpdateModal: FC<IModal> = ({
   showModal,
   name,
   max,
-  updateHandler
+  updateHandler,
 }) => {
   const weekDays = [
     { value: "sunday", label: "Sunday" },
@@ -41,7 +41,8 @@ const UpdateModal: FC<IModal> = ({
   const {
     register,
     handleSubmit,
-    setError,
+    setValue,
+    reset,
     formState: { errors },
     control,
   } = useForm();
@@ -65,37 +66,47 @@ const UpdateModal: FC<IModal> = ({
   });
 
   useEffect(() => {
-    let defaultEnable: any = [];
-    let newOptions = [...options];
-    updatedData?.Week?.forEach((val: any, i: any) => {
-      weekAppend({
-        startTime: val?.startTime,
-        endTime: val?.endTime,
-        day: val?.day,
-      });
+    //console.log("useffect")
+    updatedData && reset({
+      firstName: updatedData?.firstName,
+      description: updatedData?.description,
+      city: updatedData?.city,
+      varient: updatedData?.varient,
+      Week: updatedData?.Week,
+    });
+    // let defaultEnable: any = [];
+    // let newOptions = [...options];
+    // updatedData?.Week?.forEach((val: any, i: any) => {
+    //   weekAppend({
+    //     startTime: val?.startTime,
+    //     endTime: val?.endTime,
+    //     day: val?.day,
+    //   });
 
-      defaultEnable.push({
-        value: val?.day,
-        label: val?.day,
-        isDisabled: true,
-      });
-    });
-    updatedData?.varient?.forEach((val: any, i: any) => {
-      varientAppend({
-        feature: val?.feature,
-        value: val?.value,
-      });
-    });
+    //   defaultEnable.push({
+    //     value: val?.day,
+    //     label: val?.day,
+    //     isDisabled: true,
+    //   });
+    // });
+    // updatedData?.varient?.forEach((val: any, i: any) => {
+    //   varientAppend({
+    //     feature: val?.feature,
+    //     value: val?.value,
+    //   });
+    // });
 
-    newOptions.forEach((value, index) => {
-      defaultEnable.forEach((val: any, i: any) => {
-        if (value.value === val.value) {
-          newOptions[index].isDisabled = true;
-        }
-      });
-    });
-    setOptions(newOptions);
+    // newOptions.forEach((value, index) => {
+    //   defaultEnable.forEach((val: any, i: any) => {
+    //     if (value.value === val.value) {
+    //       newOptions[index].isDisabled = true;
+    //     }
+    //   });
+    // });
+    // setOptions(newOptions);
   }, [updatedData]);
+
+
 
   const disableOption = (e: any) => {
     // console.log("enableoption array",enableArrayOption,e)
@@ -120,30 +131,33 @@ const UpdateModal: FC<IModal> = ({
     setOptions(newArray);
     // setDisable(true)
   };
-
+  //console.log("model open", updatedData);
   const onSubmit = async (data: any) => {
-    updateHandler(updatedData?.id,data)
+    console.log("updated modal updatedData", updatedData);
+    console.log("updated modal data", data);
+    //return false;
+    updateHandler(updatedData?.id, data);
     // await axios.patch("http://localhost:8000/posts/" + updatedData.id, data);
     // changeRender(true)
-    closeModal();
-  };
-  const closeModal = () => {
     toggle();
-    // setPropsData({})
-    varientRemove();
-    weekRemove();
   };
+  // const closeModal = () => {
+  //   toggle();
+  //   varientRemove();
+  //   weekRemove();
+  // };
 
   return (
     <>
       <Modal
         show={showModal}
-        onHide={closeModal}
+        onHide={toggle}
         backdrop="static"
         keyboard={false}
         dialogClassName="modal-90w"
         aria-labelledby="example-custom-modal-styling-title"
       >
+        <pre>{JSON.stringify(updatedData)}</pre>
         <Modal.Header closeButton>
           <Modal.Title>Modal title</Modal.Title>
         </Modal.Header>
@@ -152,13 +166,13 @@ const UpdateModal: FC<IModal> = ({
             onSubmit={handleSubmit(onSubmit)}
             style={{ position: "relative" }}
           >
-            firstName{" "}
             <input
               {...register("firstName", {
                 required: true,
-                value: updatedData?.firstName,
+                // value:updatedData?.firstName
               })}
             />
+            {/* <input name="firstName" value={ updatedData?.firstName}/> */}
             <br />
             <br />
             Description{" "}
@@ -345,4 +359,4 @@ const UpdateModal: FC<IModal> = ({
   );
 };
 
-export default UpdateModal;
+export default memo(UpdateModal);

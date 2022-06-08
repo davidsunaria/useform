@@ -4,6 +4,7 @@ import React, {
   ReactNode,
   memo,
   useEffect,
+  useCallback,
   useState,
   useContext,
 } from "react";
@@ -31,40 +32,53 @@ interface ErrorProps {
   renderMethod?: any;
 }
 
-const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
-  const { isRender, lastData ,changeRender}: any = useContext(FormContext);
+const Detail: FC<ErrorProps> = () => {
+  const { isCreated ,changeCreatedStatus}: any = useContext(FormContext);
   const [data, setData] = useState<any>([]);
   const [isOpen, setOpen] = useState<boolean>(false);
-  const [propsData, setPropsData] = useState<any>();
-  const [isConfirm, setConfirm] = useState<boolean>(false);
-  const [isDeleted, setDeleted] = useState<boolean>(false);
-  const [deletedId, setDeletedId] = useState<number | string>("");
-  const [deletedData, setDeletedData] = useState<IUser>();
- 
-
+  const [propsData, setPropsData] = useState<any>({});
+  
   useEffect(() => {
     axios.get("http://localhost:8000/posts").then((detail) => {
       setData(detail?.data);
     });
   }, []);
 
+  // useEffect(() => {
+  //   if (Object.keys(lastData).length !== 0) {
+  //     setData((_: any) => [..._, lastData]);
+  //   }
+  // }, [lastData]);
+
   useEffect(() => {
-    if( Object.keys(lastData).length !== 0){
-      setData((_: any) => [..._, lastData]);
+    if(isCreated){
+      axios.get("http://localhost:8000/posts").then((detail) => {
+        setData(detail?.data);
+        changeCreatedStatus()
+      });
     }
-  }, [lastData]);
+    
+  }, [isCreated]);
 
+  
 
-  const updateHandler = async (id :number ,value: IUser) => {
-    console.log("id",id, "value",value)
+  const updateHandler = async (id: number, value: IUser) => {
+    console.log("Update req", id, value);
+    if (!id) {
+      throw new Error("id is required");
+    }
+    //console.log("id",id, "value",value)
     try {
-      let response =  await axios.patch("http://localhost:8000/posts/" + id, value);
+      let response = await axios.put(
+        "http://localhost:8000/posts/" + id,
+        value
+      );
       if (response.status === 200) {
         const updatedData = [...data];
         let index = updatedData.findIndex((val: any) => val.id === id);
-        console.log("updatde index",index)
-        updatedData[index]=value;
-        setData([...updatedData]);
+        //console.log("updatde index",index)
+        updatedData[index] = { ...value, id };
+        setData(updatedData);
       }
     } catch (error: any) {
       alert(error?.response?.data);
@@ -72,12 +86,14 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
   };
 
   const setModal = (data: any) => {
+    //console.log("inside data",data)
     setPropsData(data);
     setOpen(true);
   };
-  const toggle = () => {
+
+  const toggle = useCallback(() => {
     setOpen(!isOpen);
-  };
+  }, [isOpen]);
 
   const confirmModal = (data: any) => {
     confirmAlert({
@@ -103,9 +119,10 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
           </Alert>
         );
       },
-    })
+    });
   };
   const deleteHandler = async (value: IUser) => {
+    console.log("value?.id", value?.id);
     try {
       let response = await axios.delete(
         "http://localhost:8000/posts/" + value?.id
@@ -120,8 +137,6 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
       alert(error?.response?.data);
     }
   };
- 
-  
 
   const reorder = (list: any, startIndex: any, endIndex: any) => {
     const result = Array.from(list);
@@ -152,6 +167,14 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
 
   return (
     <>
+      <UpdateModal
+        updatedData={propsData}
+        updateHandler={updateHandler}
+        // getUpdatedValue={getUpdatedValue}
+        showModal={isOpen}
+        toggle={toggle}
+      />
+
       <table className="table">
         <thead>
           <tr>
@@ -163,27 +186,10 @@ const Detail: FC<ErrorProps> = ({ isDataSubmit, renderMethod }) => {
             <th colSpan={2}>Action</th>
           </tr>
         </thead>
-        {isOpen && (
-          <UpdateModal
-            updatedData={propsData}
-            updateHandler={updateHandler}
-            // getUpdatedValue={getUpdatedValue}
-            showModal={isOpen}
-            toggle={toggle}
-          />
-        )}
-        {/* {isConfirm && (
-          <CustomConfirm
-            showConfirm={isConfirm}
-            confirmText={"yes"}
-            deleteHandler={deleteHandler}
-            deletedData={deletedData}
-          />
-        )} */}
 
         <DragDropContext onDragEnd={onEnd}>
           <Droppable droppableId="droppable-1">
-            {(provided, snapshot) => (
+            {(provided) => (
               <tbody ref={provided.innerRef} {...provided.droppableProps}>
                 {data &&
                   data?.length > 0 &&
